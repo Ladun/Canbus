@@ -1,0 +1,6 @@
+bus
+front_door
+back_door
+front_rear_num
+side_num
+door_num
