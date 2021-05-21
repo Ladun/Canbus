@@ -33,6 +33,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.TextView;
@@ -40,6 +41,7 @@ import android.widget.Toast;
 
 import com.ssusp.canbus.customview.AutoFitTextureView;
 import com.ssusp.canbus.env.ImageUtils;
+import com.ssusp.canbus.tflite.BusInformation;
 import com.ssusp.canbus.tflite.Classifier;
 import com.ssusp.canbus.tflite.YoloV5Classifier;
 
@@ -113,6 +115,9 @@ public class DetectActivity extends AppCompatActivity
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
+
+    // Detected info variables
+    private List<BusInformation> mBusInformations;
 
 
     // Camera Listener Callback
@@ -251,7 +256,6 @@ public class DetectActivity extends AppCompatActivity
         super.onPause();
     }
 
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
@@ -274,6 +278,54 @@ public class DetectActivity extends AppCompatActivity
             }
         }
         return true;
+    }
+
+    // ------------------------------------- Detect Info Functions -------------------------------------
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        if(event.getAction() == MotionEvent.ACTION_UP){
+            BusInfoSpeech();
+        }
+
+        return true;
+    }
+
+    public void BusInfoSpeech(){
+        if(mBusInformations.size() == 0)
+            return;
+
+        List<BusInformation> busInformations = mBusInformations;
+
+        Collections.sort(busInformations, new Comparator<BusInformation>() {
+            @Override
+            public int compare(BusInformation t0, BusInformation t1) {
+                return Float.compare(t0.getBusLocationArea(), t1.getBusLocationArea());
+            }
+        });
+
+        // "XX, XX 버스가 있습니다."
+        StringBuilder numberSpeech = new StringBuilder();
+        for(int i = busInformations.size() - 1; i >= 0; i--){
+            BusInformation busInfo = busInformations.get(i);
+
+            numberSpeech.append(busInfo.getBusNumber());
+            if(i != 0)
+                numberSpeech.append(", ");
+        }
+        numberSpeech.append(" 버스가 있습니다.");
+
+        // "xx 버스 뒷문이 더 가까이 있습니다."
+        // 문에 대한 정보는 가장 가까이 있는 버스만 알려줌
+        String doorSpeech = busInformations.get(busInformations.size() - 1).getBusDoorSpeech();
+
+        // TODO: TTS 실행
+        Log.d(TAG +"_SPEECH", numberSpeech.toString());
+        if(doorSpeech.length() != 0) {
+            Log.d(TAG + "_SPEECH", doorSpeech);
+        }
     }
 
     // ------------------------------------- Detect Functions -------------------------------------
@@ -364,10 +416,7 @@ public class DetectActivity extends AppCompatActivity
 
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
-                        Log.d(TAG + "_Recog", "Count: " + results.size());
-                        for (Classifier.Recognition r : results) {
-                            Log.d(TAG + "_Recog", r.toString());
-                        }
+                        mBusInformations = processResult(results);
 
                         computingDetection = false;
 
@@ -375,7 +424,6 @@ public class DetectActivity extends AppCompatActivity
                                 new Runnable() {
                                     @Override
                                     public void run() {
-//                                        overlay.setImageBitmap(overlayBitmap);
                                         showFrameInfo(previewSize.getWidth() + "x" + previewSize.getHeight());
                                         showCropInfo(croppedBitmap.getWidth() + "x" + croppedBitmap.getHeight());
                                         showInference(lastProcessingTimeMs + "ms");
@@ -384,6 +432,43 @@ public class DetectActivity extends AppCompatActivity
                     }
                 });
 
+    }
+
+    private List<BusInformation>  processResult(final List<Classifier.Recognition> results){
+
+        Log.d(TAG + "_Recog", "Count: " + results.size());
+        List<BusInformation> busInformations = new ArrayList<>();
+        for(int i = results.size() - 1; i >= 0; i--){
+            if(results.get(i).getDetectedClass() == 0){
+                busInformations.add(new BusInformation(results.get(i).getLocation()));
+                results.remove(i);
+            }
+        }
+
+        // DetectedClass 값을 기준으로 오름차순 정렬
+        Collections.sort(results, new Comparator<Classifier.Recognition>() {
+            @Override
+            public int compare(Classifier.Recognition t1, Classifier.Recognition t2) {
+                return Integer.compare(t1.getDetectedClass(), t2.getDetectedClass());
+            }
+        });
+
+        for(Classifier.Recognition r : results){
+            int idx = 0;
+            float minFitness = 0;
+
+            for(int j = 0; j < busInformations.size(); j++){
+
+                float f = busInformations.get(j).locationFitness(r);
+                if (f < minFitness) {
+                    idx = j;
+                    minFitness = f;
+                }
+            }
+            busInformations.get(idx).addInfo(r);
+        }
+
+        return busInformations;
     }
 
     public void onPreviewSizeChosen(final Size size, final int rotation){

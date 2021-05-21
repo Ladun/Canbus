@@ -4,6 +4,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.os.Build;
+import android.util.Log;
 
 import com.ssusp.canbus.env.Utils;
 
@@ -191,10 +192,15 @@ public class YoloV5Classifier implements Classifier {
 
     private ArrayList<Recognition> nms(final ArrayList<Recognition> list)
     {
-        Integer[] idx = argsort(list);
-
-        boolean[] dead = new boolean[idx.length];
         ArrayList<Recognition> alive = new ArrayList<>();
+
+        if(list.size() == 0)
+            return alive;
+
+        Integer[] idx = argsort(list);
+        boolean[] dead = new boolean[idx.length];
+
+        Log.d("YoloV5ClassifierTest", list.get(idx[0]).toString());
 
         for(int i = 0; i < idx.length - 1; i++)
         {

@@ -1,6 +1,6 @@
-bus
-front_door
-back_door
-front_rear_num
-side_num
-door_num
+버스
+앞문
+뒷문
+번호(앞)
+번호(옆)
+번호(문)
