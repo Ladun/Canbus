@@ -39,5 +39,6 @@ dependencies {
 
     implementation 'org.tensorflow:tensorflow-lite:2.4.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.4.0'
+    implementation 'com.rmtheis:tess-two:9.1.0'
 
 }
