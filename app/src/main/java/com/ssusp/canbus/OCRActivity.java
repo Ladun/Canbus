@@ -30,7 +30,7 @@ public class OCRActivity extends AppCompatActivity{
         String lang = "kor";
         tess = new TessBaseAPI();
         tess.init(dataPath, lang);
-
+  
         //이미지를 비트맵으로 받아서 textview로 출력
         processImage(BitmapFactory.decodeResource(getResources(), R.drawable.test1));
     }
