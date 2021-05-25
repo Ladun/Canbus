@@ -37,7 +37,10 @@
         </activity>
         <activity android:name=".SearchPlaceActivity">
         </activity>
-
+        <activity android:name=".VoiceSearchActivity">
+        </activity>
+        <activity android:name=".SearchPlaceVActivity">
+        </activity>
 
 
         <uses-library android:name="com.google.android.maps"/>

@@ -21,7 +21,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.ssusp.canbus.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
@@ -33,7 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
 
-public class SearchPlaceActivity extends AppCompatActivity {
+public class SearchPlaceVActivity extends AppCompatActivity {
     //로그캣 사용 설정
     private static final String TAG = "SearchPlaceActivity";
 
@@ -58,14 +57,14 @@ public class SearchPlaceActivity extends AppCompatActivity {
         btnLocation = findViewById(R.id.button1);
         btnKor2Loc = findViewById(R.id.button2);
 
-/*
+///////////////////////////////////////////////////////
         Intent intent = getIntent();
 
         Bundle bundle = intent.getExtras();
         String place = bundle.getString("place");
 
         editText.setText(place);
-*/
+///////////////////////////////////////////////////////
 
         //지도 프래그먼트 설정
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);

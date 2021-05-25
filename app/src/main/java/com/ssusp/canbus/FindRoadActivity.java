@@ -1,18 +1,25 @@
 package com.ssusp.canbus;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.ssusp.canbus.R;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.ArrayList;
+
 public class FindRoadActivity extends AppCompatActivity {
 
-    TextInputEditText TextInputEditText_arrival, TextInputEditText_destination;
+    TextInputEditText TextInputEditText_arrival, TextInputEditText_destination, editText;
     Button Button_searchArr, Button_searchDes, Button_arrVoice, Button_desVoice, Button_searchRoad;
 
     @Override
@@ -63,25 +70,24 @@ public class FindRoadActivity extends AppCompatActivity {
 
         });
 
-/*
         Button_arrVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                VoiceTask voiceTask = new VoiceTask();
-                voiceTask.execute();
+                Intent intent = new Intent(com.ssusp.canbus.FindRoadActivity.this, VoiceSearchActivity.class);
+                startActivity(intent);
             }
         });
 
         Button_desVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                VoiceTask voiceTask = new VoiceTask();
-                voiceTask.execute();
+                Intent intent = new Intent(com.ssusp.canbus.FindRoadActivity.this, VoiceSearchActivity.class);
+                startActivity(intent);
             }
         });
 
     }
-
+/*
     public class VoiceTask extends AsyncTask<String, Integer, String> {
         String str = null;
 
@@ -128,10 +134,9 @@ public class FindRoadActivity extends AppCompatActivity {
             String str = results.get(0);
             Toast.makeText(getBaseContext(), str, Toast.LENGTH_SHORT).show();
 
-            TextView tv = findViewById(R.id.TextInputEditText_arrival);
+            TextView tv = findViewById(R.id.editText);
             tv.setText(str);
         }
     }
 */
-    }
 }
