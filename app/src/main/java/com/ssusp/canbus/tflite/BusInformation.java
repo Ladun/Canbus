@@ -1,6 +1,7 @@
 package com.ssusp.canbus.tflite;
 
 import android.graphics.RectF;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,12 +10,10 @@ public class BusInformation {
 
     private RectF busLocation;
 
-    private List<RectF> numbers;
+    private List<String> numbers;
 
     private RectF frontDoor;
     private RectF backDoor;
-
-    private String busNumber;
 
     public BusInformation(RectF busLocation){
         this.busLocation = busLocation;
@@ -50,34 +49,29 @@ public class BusInformation {
         return (w * h) / ((location.right - location.left) * (location.top - location.bottom));
     }
 
-    public void addInfo(Classifier.Recognition r) {
+    public void addDoor(Classifier.Recognition r) {
 
-        switch (r.getDetectedClass()) {
-            case 1: {
-                frontDoor = r.getLocation();
-                break;
-            }
-            case 2: {
-                backDoor = r.getLocation();
-                break;
-            }
-            case 3:
-            case 4:
-            case 5:{
-                numbers.add(r.getLocation());
-                break;
-            }
-        }
+        if(r.getDetectedClass() == 1)
+            frontDoor = r.getLocation();
+        else
+            backDoor = r.getLocation();
+    }
+    public void addNumber(String number){
+        numbers.add(number);
     }
 
     // Bus information speech functions
-
     public String getBusNumber(){
-        return "0000";
+        for(String num :numbers)
+            Log.d("BusInformation", num);
+
+        if(numbers.size() < 1)
+            return "";
+
+        return numbers.get(0);
     }
 
     public boolean hasDoor(){
-        // TODO: 버스크기와 문의 크기를 비교해서 두 개의 문(앞문, 뒷문)이 충분히 있을 수 있는데 하나만 잡혀 있을 경우도 판단
         return frontDoor != null || backDoor != null;
     }
 

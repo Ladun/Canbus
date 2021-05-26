@@ -8,12 +8,15 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -39,13 +42,19 @@ import android.view.TextureView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.googlecode.tesseract.android.TessBaseAPI;
 import com.ssusp.canbus.customview.AutoFitTextureView;
 import com.ssusp.canbus.env.ImageUtils;
 import com.ssusp.canbus.tflite.BusInformation;
 import com.ssusp.canbus.tflite.Classifier;
 import com.ssusp.canbus.tflite.YoloV5Classifier;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -191,6 +200,10 @@ public class DetectActivity extends AppCompatActivity
 
     private Classifier classifier;
 
+    // Tesseract Properties ---------------------
+    private TessBaseAPI tess;
+    String dataPath="";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -204,6 +217,8 @@ public class DetectActivity extends AppCompatActivity
 
         if(allPermissionGranted()){
             startCamera();
+
+            initTesseract();
         }
         else{
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
@@ -280,6 +295,63 @@ public class DetectActivity extends AppCompatActivity
         return true;
     }
 
+    // ------------------------------------- Tesseract Functions -------------------------------------
+
+    private void initTesseract(){
+        String lang = "kor";
+        dataPath = getFilesDir().toString();
+        checkFile(new File(dataPath + "/tessdata/"), lang);
+
+        tess = new TessBaseAPI();
+        Log.d("Test123", dataPath);
+        tess.init(dataPath, lang);
+    }
+
+    private void checkFile(File dir, String lang) {
+        if (!dir.exists()) {
+            Log.d("Test123", "Make directory");
+            dir.mkdirs();
+        }
+        Log.d("Test123", "directory");
+        String datafilePath = dataPath+ "/tessdata/" + lang + ".traineddata";
+        File datafile = new File(datafilePath);
+        if (!datafile.exists()) {
+            copyFiles(lang);
+        }
+    }
+
+    private void copyFiles(String lang){
+        try{
+            String filepath=dataPath + "/tessdata/"+lang+".traineddata";
+
+            AssetManager assetManager=getAssets();
+
+            InputStream inStream=assetManager.open("tessdata/"+lang+".traineddata");
+            OutputStream outStream=new FileOutputStream(filepath);
+
+            byte[] buffer=new byte[1024];
+            int read;
+            while((read=inStream.read(buffer))!=-1)
+            {
+                outStream.write(buffer,0,read);
+            }
+            outStream.flush();
+            outStream.close();
+        }catch(FileNotFoundException e) {
+            e.printStackTrace();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public String processTesseract(Bitmap bitmap){
+        // Toast.makeText(getApplicationContext(),"checking...",Toast.LENGTH_LONG).show();
+        String result = null;
+        tess.setImage(bitmap);
+        result=tess.getUTF8Text();
+
+        return result;
+    }
     // ------------------------------------- Detect Info Functions -------------------------------------
 
 
@@ -465,7 +537,14 @@ public class DetectActivity extends AppCompatActivity
                     minFitness = f;
                 }
             }
-            busInformations.get(idx).addInfo(r);
+            if(r.getDetectedClass() <= 2){
+                busInformations.get(idx).addDoor(r);
+            }
+            else{
+                Bitmap numberROI = Bitmap.createBitmap(croppedBitmap, (int)r.getLocation().left, (int)r.getLocation().top, (int)r.getLocation().width(), (int)r.getLocation().height());
+                String number = processTesseract(numberROI);
+                busInformations.get(idx).addNumber(number);
+            }
         }
 
         return busInformations;
