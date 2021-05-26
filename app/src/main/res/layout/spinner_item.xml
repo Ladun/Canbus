@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="#FFFFFF"
+    android:ellipsize="marquee"
+    android:gravity="center_vertical"
+    android:id="@+id/spinner_title"
+    android:layout_gravity="center"
+    android:layout_height="40dp"
+    android:layout_width="match_parent"
+    android:singleLine="true"
+    android:textColor="#000000"
+    android:textSize="18sp"
+    android:textStyle="bold"
+    />

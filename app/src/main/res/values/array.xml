@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name = "traffic">
+
+        <item>최적 경로</item>
+        <item>최소 환승</item>
+        <item>최소 도보</item>
+
+    </string-array>
+</resources>
