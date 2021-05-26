@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_traffic"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".PathFindActivity">
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <TextView
+                android:id="@+id/textview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="교통편 검색"
+                android:textColor="#000000"
+                android:textSize="25sp" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textview"
+                android:layout_marginLeft="5sp"
+                android:layout_marginTop="5sp"
+                android:layout_marginRight="5sp">
+
+
+                <EditText
+                    android:id="@+id/depart_loc"
+                    android:layout_width="230dp"
+                    android:layout_height="40dp"
+                    android:background="#FFC400"
+                    android:gravity="center"
+                    android:hint="출발지"
+                    android:inputType="text"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:privateImeOptions="defaultInputmode=korean"
+                    />
+
+                <Spinner
+                    android:id="@+id/spinner_menu"
+                    android:layout_width="120dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_toEndOf="@+id/depart_loc"
+                    android:background="@null"
+                    android:entries="@array/traffic"
+                    android:spinnerMode="dropdown" />
+
+                <EditText
+                    android:id="@+id/arrive_loc"
+                    android:layout_width="230dp"
+                    android:layout_height="40dp"
+                    android:layout_below="@+id/depart_loc"
+                    android:layout_marginTop="7dp"
+                    android:background="#FFC400"
+                    android:gravity="center"
+                    android:hint="도착지"
+                    android:inputType="text"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:privateImeOptions="defaultInputmode=korean"
+                    />
+
+                <Button
+                    android:id="@+id/send"
+                    android:layout_width="100dp"
+                    android:layout_height="39dp"
+                    android:layout_below="@id/spinner_menu"
+                    android:layout_alignParentEnd="true"
+                    android:layout_gravity="right"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="17dp"
+                    android:layout_toEndOf="@+id/arrive_loc"
+                    android:background="#FFC400"
+                    android:gravity="center"
+                    android:text="검색"
+                    android:textColor="#000000"
+                    android:textSize="20sp" />
+
+                <fragment
+                    android:id="@+id/map"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:layout_below="@+id/send"
+                    tools:context=".TrafficSearchActivity" />
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_below="@id/map"
+                    android:layout_marginBottom="20dp">
+
+                    <RelativeLayout
+                        android:id="@+id/rl_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/map"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="20dp"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <RelativeLayout
+                            android:id="@+id/rl_route_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="50dp"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:id="@+id/recommend_route"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="10dp"
+                                android:text="추천 경로"
+                                android:textSize="16sp" />
+
+                            <TextView
+                                android:id="@+id/during_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="#FFFFFF"
+                                android:gravity="right"
+                                android:paddingLeft="5dp"
+                                android:paddingRight="5dp"
+                                android:textColor="#000000"
+                                android:textSize="28sp" />
+
+                            <org.apmem.tools.layouts.FlowLayout
+                                android:id="@+id/fl_route"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/during_time"
+                                android:layout_marginBottom="10dp"
+                                android:background="#FFFFFF">
+
+                            </org.apmem.tools.layouts.FlowLayout>
+
+                        </RelativeLayout>
+
+                        <RelativeLayout
+                            android:id="@+id/rl_another_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/rl_route_view"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:id="@+id/another_route"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="다른 경로 더 보기"
+                                android:textColor="#000000"
+                                android:textSize="16sp"
+                                />
+
+                            <LinearLayout
+                                android:id="@+id/ll_flow_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                            </LinearLayout>
+
+                        </RelativeLayout>
+
+                    </RelativeLayout>
+
+                </ScrollView>
+
+                <LinearLayout
+                    android:id="@+id/ll_detail_course_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/map"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginBottom="-20dp"
+                    android:background="#FFFFFF"
+                    android:backgroundTint="#FFFFFF"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageButton
+                        android:id="@+id/ib_detail_remove"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="right"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@null">
+
+                    </ImageButton>
+
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:id="@+id/ll_traffic_detail_route_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="10dp"
+                            android:paddingBottom="20dp">
+
+                        </LinearLayout>
+
+                    </ScrollView>
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+
+</LinearLayout>
