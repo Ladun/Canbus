@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="#ffffff"
+        android:text="길찾기"/>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="20"
+        >
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/TextInputEditText_arrival"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#ffff00"
+            android:padding="12dp"
+            android:layout_margin="12dp"
+            android:hint="출발지"
+            android:layout_weight="19"
+            />
+        <Button
+            android:id="@+id/Button_arrVoice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#ffffff"
+            android:padding="12dp"
+            android:layout_margin="12dp"
+            android:layout_weight="1"
+            android:text="음성검색"
+            android:textSize="16sp"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="20"
+        >
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/TextInputEditText_destination"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#ffff00"
+            android:padding="12dp"
+            android:layout_margin="12dp"
+            android:hint="도착지"
+            android:layout_weight="19"
+            />
+        <Button
+            android:id="@+id/Button_desVoice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#ffffff"
+            android:padding="12dp"
+            android:layout_margin="12dp"
+            android:layout_weight="1"
+            android:text="음성검색"
+            android:textSize="16sp"
+            />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/Button_searchRoad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ffff00"
+        android:layout_margin="12dp"
+        android:textSize="20sp"
+        android:text="안내 시작"/>
+
+</LinearLayout>
