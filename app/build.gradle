@@ -48,6 +48,8 @@ dependencies {
     //implementation 'com.google.android.gms:play-services-places:17.0.0'
 
     implementation 'com.google.android.gms:play-services:12.0.1'
+    implementation 'com.google.android.gms:play-services-auth:16.0.0'
+    implementation 'com.google.firebase:firebase-auth:16.0.3'
     implementation 'com.android.support:multidex:1.0.3'
 
 //    implementation 'com.google.android.libraries.places:places-compat:2.4.0'
