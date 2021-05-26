@@ -11,24 +11,28 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textColor="#ffffff"
-        android:text="CanBus"/>
+        android:text="음성 입력"/>
 
-    <Button
-        android:id="@+id/Button_findRoad"
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/TextInputEditText_voicePlace"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#ffff00"
+        android:padding="12dp"
         android:layout_margin="12dp"
-        android:textSize="20sp"
-        android:text="길찾기"/>
+        android:hint="장소"
+        />
 
     <Button
-        android:id="@+id/Button_idenBusNum"
+        android:id="@+id/Button_voiceSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#ffff00"
-        android:layout_margin="12dp"
+        android:background="#ffffff"
+        android:text="검색"
         android:textSize="20sp"
-        android:text="버스 번호 인식"/>
+        android:padding="12dp"
+        android:layout_margin="12dp"
+        />
+
 
 </LinearLayout>
