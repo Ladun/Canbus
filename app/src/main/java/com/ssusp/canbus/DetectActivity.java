@@ -44,9 +44,11 @@ import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.ssusp.canbus.customview.AutoFitTextureView;
+import com.ssusp.canbus.customview.OverlayView;
 import com.ssusp.canbus.env.ImageUtils;
 import com.ssusp.canbus.tflite.BusInformation;
 import com.ssusp.canbus.tflite.Classifier;
+import com.ssusp.canbus.tflite.MultiBoxTracker;
 import com.ssusp.canbus.tflite.YoloV5Classifier;
 
 import java.io.File;
@@ -59,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -200,6 +203,11 @@ public class DetectActivity extends AppCompatActivity
 
     private Classifier classifier;
 
+    private MultiBoxTracker tracker;
+    OverlayView trackingOverlay;
+
+    private long timestamp = 0;
+
     // Tesseract Properties ---------------------
     private TessBaseAPI tess;
     String dataPath="";
@@ -303,16 +311,13 @@ public class DetectActivity extends AppCompatActivity
         checkFile(new File(dataPath + "/tessdata/"), lang);
 
         tess = new TessBaseAPI();
-        Log.d("Test123", dataPath);
         tess.init(dataPath, lang);
     }
 
     private void checkFile(File dir, String lang) {
         if (!dir.exists()) {
-            Log.d("Test123", "Make directory");
             dir.mkdirs();
         }
-        Log.d("Test123", "directory");
         String datafilePath = dataPath+ "/tessdata/" + lang + ".traineddata";
         File datafile = new File(datafilePath);
         if (!datafile.exists()) {
@@ -464,6 +469,10 @@ public class DetectActivity extends AppCompatActivity
     }
 
     public void processImage(){
+        ++timestamp;
+        final long currTimestamp = timestamp;
+
+        trackingOverlay.postInvalidate();
 
         if(computingDetection)
         {
@@ -489,6 +498,21 @@ public class DetectActivity extends AppCompatActivity
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
                         mBusInformations = processResult(results);
+
+                        final List<Classifier.Recognition> mappedRecognitions =
+                                new LinkedList<Classifier.Recognition>();
+
+                        for (final Classifier.Recognition result : results) {
+                            final RectF location = result.getLocation();
+
+                                cropToFrameTransform.mapRect(location);
+
+                                result.setLocation(location);
+                                mappedRecognitions.add(result);
+                        }
+
+                        tracker.trackResults(mappedRecognitions, currTimestamp);
+                        trackingOverlay.postInvalidate();
 
                         computingDetection = false;
 
@@ -552,6 +576,7 @@ public class DetectActivity extends AppCompatActivity
 
     public void onPreviewSizeChosen(final Size size, final int rotation){
 
+        tracker = new MultiBoxTracker(this);
         try {
             classifier = YoloV5Classifier.create(
                     getAssets(),
@@ -583,6 +608,18 @@ public class DetectActivity extends AppCompatActivity
 
         cropToFrameTransform = new Matrix();
         frameToCropTransform.invert(cropToFrameTransform);
+
+
+        trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
+        trackingOverlay.addCallback(
+                new OverlayView.DrawCallback() {
+                    @Override
+                    public void drawCallback(final Canvas canvas) {
+                        tracker.draw(canvas);
+                    }
+                });
+
+        tracker.setFrameConfiguration(previewSize.getWidth(), previewSize.getHeight(), sensorOrientation);
 
     }
 

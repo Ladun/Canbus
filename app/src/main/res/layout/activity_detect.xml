@@ -29,6 +29,12 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/detect_title"/>
 
+    <com.ssusp.canbus.customview.OverlayView
+        android:id="@+id/tracking_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/detect_title"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
