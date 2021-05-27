@@ -363,18 +363,21 @@ public class DetectActivity extends AppCompatActivity
         // Toast.makeText(getApplicationContext(),"checking...",Toast.LENGTH_LONG).show();
         String result = null;
         Mat matBase=new Mat();
+        //bitmap to mat
         Utils.bitmapToMat(bitmap ,matBase);
+        //gray 스케일;
         Mat matGray = new Mat();
-        Mat matCny = new Mat();
-        //gray 스케일
         Imgproc.cvtColor(matBase, matGray, Imgproc.COLOR_BGR2GRAY);
-        //thresh hold
-        Imgproc.threshold(matGray, matCny, 160, 255, Imgproc.THRESH_BINARY);
+        //blur처리;
+        Mat matBlur = new Mat();
+        Imgproc.bilateralFilter(matGray,matBlur,5,75,75);
+        //thresh hold;
         Mat matResult=new Mat();
-        //Bilateral Filter
-        Imgproc.bilateralFilter(matCny,matResult,5,75,75);
+        Imgproc.threshold(matGray, matResult, 160, 255, Imgproc.THRESH_BINARY);
 
-        Bitmap bitResult= Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888); // 비트맵 생성
+            
+        Bitmap bitResult= Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
+        //mat to bitmap
         Utils.matToBitmap(matResult, bitResult);
         tess.setImage(bitResult);
         result=tess.getUTF8Text();
