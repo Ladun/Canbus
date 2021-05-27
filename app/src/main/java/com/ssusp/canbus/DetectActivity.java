@@ -53,6 +53,10 @@ import com.ssusp.canbus.tflite.BusInformation;
 import com.ssusp.canbus.tflite.Classifier;
 import com.ssusp.canbus.tflite.MultiBoxTracker;
 import com.ssusp.canbus.tflite.YoloV5Classifier;
+//opencv라이브러리-이미지 전처리
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -358,7 +362,21 @@ public class DetectActivity extends AppCompatActivity
     public String processTesseract(Bitmap bitmap){
         // Toast.makeText(getApplicationContext(),"checking...",Toast.LENGTH_LONG).show();
         String result = null;
-        tess.setImage(bitmap);
+        Mat matBase=new Mat();
+        Utils.bitmapToMat(bitmap ,matBase);
+        Mat matGray = new Mat();
+        Mat matCny = new Mat();
+        //gray 스케일
+        Imgproc.cvtColor(matBase, matGray, Imgproc.COLOR_BGR2GRAY);
+        //thresh hold
+        Imgproc.threshold(matGray, matCny, 160, 255, Imgproc.THRESH_BINARY);
+        Mat matResult=new Mat();
+        //Bilateral Filter
+        Imgproc.bilateralFilter(matCny,matResult,5,75,75);
+
+        Bitmap bitResult= Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888); // 비트맵 생성
+        Utils.matToBitmap(matResult, bitResult);
+        tess.setImage(bitResult);
         result=tess.getUTF8Text();
 
         return result;
