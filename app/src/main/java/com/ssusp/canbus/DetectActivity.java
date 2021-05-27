@@ -13,8 +13,10 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -39,6 +41,7 @@ import android.util.SparseIntArray;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -203,10 +206,11 @@ public class DetectActivity extends AppCompatActivity
 
     private Classifier classifier;
 
+    private ImageView testImageView;
+    private Bitmap origin;
+
     private MultiBoxTracker tracker;
     OverlayView trackingOverlay;
-
-    private long timestamp = 0;
 
     // Tesseract Properties ---------------------
     private TessBaseAPI tess;
@@ -222,6 +226,8 @@ public class DetectActivity extends AppCompatActivity
         frameValueTextView = findViewById(R.id.frame_info);
         cropValueTextView = findViewById(R.id.crop_info);
         inferenceTimeTextView = findViewById(R.id.inference_info);
+
+        testImageView = findViewById(R.id.test_image_view);
 
         if(allPermissionGranted()){
             startCamera();
@@ -469,9 +475,6 @@ public class DetectActivity extends AppCompatActivity
     }
 
     public void processImage(){
-        ++timestamp;
-        final long currTimestamp = timestamp;
-
         trackingOverlay.postInvalidate();
 
         if(computingDetection)
@@ -497,21 +500,39 @@ public class DetectActivity extends AppCompatActivity
 
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
-                        mBusInformations = processResult(results);
+                        mBusInformations = processResult(results, rgbFrameBitmap);
 
+                        // Show overlay and rois
                         final List<Classifier.Recognition> mappedRecognitions =
                                 new LinkedList<Classifier.Recognition>();
+
+                        origin = Bitmap.createBitmap(rgbFrameBitmap.getWidth(), rgbFrameBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+                        final Canvas c = new Canvas(origin);
+                        Matrix rotateMatrix = new Matrix();
+                        rotateMatrix.postRotate(90);
 
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
 
-                                cropToFrameTransform.mapRect(location);
+                            cropToFrameTransform.mapRect(location);
+                            Log.d("ROI_TEST", result.getDetectedClass() + ": " +location);
 
-                                result.setLocation(location);
-                                mappedRecognitions.add(result);
+                            c.drawBitmap(
+                                    Bitmap.createBitmap(
+                                            rgbFrameBitmap,
+                                            (int)location.left, (int)location.top,
+                                            (int)location.width(), (int)location.height(),
+                                            rotateMatrix, true
+                                    ),
+                                    location.left, location.top,
+                                    null
+                            );
+
+                            result.setLocation(location);
+                            mappedRecognitions.add(result);
                         }
 
-                        tracker.trackResults(mappedRecognitions, currTimestamp);
+                        tracker.trackResults(mappedRecognitions);
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
@@ -520,6 +541,7 @@ public class DetectActivity extends AppCompatActivity
                                 new Runnable() {
                                     @Override
                                     public void run() {
+                                        testImageView.setImageBitmap(origin);
                                         showFrameInfo(previewSize.getWidth() + "x" + previewSize.getHeight());
                                         showCropInfo(croppedBitmap.getWidth() + "x" + croppedBitmap.getHeight());
                                         showInference(lastProcessingTimeMs + "ms");
@@ -530,12 +552,12 @@ public class DetectActivity extends AppCompatActivity
 
     }
 
-    private List<BusInformation>  processResult(final List<Classifier.Recognition> results){
+    private List<BusInformation>  processResult(final List<Classifier.Recognition> results, Bitmap origin) {
 
         Log.d(TAG + "_Recog", "Count: " + results.size());
         List<BusInformation> busInformations = new ArrayList<>();
-        for(int i = results.size() - 1; i >= 0; i--){
-            if(results.get(i).getDetectedClass() == 0){
+        for (int i = results.size() - 1; i >= 0; i--) {
+            if (results.get(i).getDetectedClass() == 0) {
                 busInformations.add(new BusInformation(results.get(i).getLocation()));
                 results.remove(i);
             }
@@ -549,27 +571,34 @@ public class DetectActivity extends AppCompatActivity
             }
         });
 
-        for(Classifier.Recognition r : results){
-            int idx = 0;
-            float minFitness = 0;
+        Matrix rotateMatrix = new Matrix();
+        rotateMatrix.postRotate(90);
+        if (busInformations.size() > 0) {
+            for (Classifier.Recognition r : results) {
+                int idx = 0;
+                float minFitness = Float.MAX_VALUE;
 
-            for(int j = 0; j < busInformations.size(); j++){
+                for (int j = 0; j < busInformations.size(); j++) {
 
-                float f = busInformations.get(j).locationFitness(r);
-                if (f < minFitness) {
-                    idx = j;
-                    minFitness = f;
+                    float f = busInformations.get(j).locationFitness(r);
+                    if (f < minFitness) {
+                        idx = j;
+                        minFitness = f;
+                    }
+                }
+                if (r.getDetectedClass() <= 2) {
+                    busInformations.get(idx).addDoor(r);
+                } else {
+                    final RectF location = r.getLocation();
+                    cropToFrameTransform.mapRect(location);
+
+                    Bitmap numberROI = Bitmap.createBitmap(origin, (int) location.left, (int) location.top, (int) location.width(), (int) location.height(), rotateMatrix, true);
+                    String number = processTesseract(numberROI);
+                    busInformations.get(idx).addNumber(number);
                 }
             }
-            if(r.getDetectedClass() <= 2){
-                busInformations.get(idx).addDoor(r);
-            }
-            else{
-                Bitmap numberROI = Bitmap.createBitmap(croppedBitmap, (int)r.getLocation().left, (int)r.getLocation().top, (int)r.getLocation().width(), (int)r.getLocation().height());
-                String number = processTesseract(numberROI);
-                busInformations.get(idx).addNumber(number);
-            }
         }
+
 
         return busInformations;
     }
@@ -600,6 +629,7 @@ public class DetectActivity extends AppCompatActivity
         rgbFrameBitmap = Bitmap.createBitmap(size.getWidth(), size.getHeight(), Bitmap.Config.ARGB_8888);
         croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888);
 
+        Log.d("Rotation", sensorOrientation + ", " + rotation + ", " + getScreenOrientation());
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
                         size.getWidth(), size.getHeight(),

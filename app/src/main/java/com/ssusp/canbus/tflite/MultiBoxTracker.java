@@ -25,6 +25,7 @@ import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
 import android.graphics.RectF;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 
@@ -106,7 +107,7 @@ public class MultiBoxTracker {
     }
   }
 
-  public synchronized void trackResults(final List<Classifier.Recognition> results, final long timestamp) {
+  public synchronized void trackResults(final List<Classifier.Recognition> results) {
     processResults(results);
   }
 
@@ -120,6 +121,8 @@ public class MultiBoxTracker {
             Math.min(
                     canvas.getHeight() / (float) (rotated ? frameWidth : frameHeight),
                     canvas.getWidth() / (float) (rotated ? frameHeight : frameWidth));
+//    Log.d("OverlayCanvas", canvas.getWidth() + ", " + canvas.getHeight());
+
     frameToCanvasMatrix =
             ImageUtils.getTransformationMatrix(
                     frameWidth,

@@ -35,6 +35,14 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/detect_title"/>
 
+    <ImageView
+        android:id="@+id/test_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+
+        android:layout_below="@+id/detect_title" />
+
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
