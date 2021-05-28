@@ -28,7 +28,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat"
         android:usesCleartextTraffic="true">
-        <activity android:name=".PathFindActivity"></activity>
+
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -44,12 +44,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FindRoadActivity"></activity>
-        <activity android:name=".IdenBusActivity"></activity>
-        <activity android:name=".FindRoadResultActivity"></activity>
-        <activity android:name=".SearchPlaceActivity"></activity>
-        <activity android:name=".VoiceSearchActivity"></activity>
-        <activity android:name=".SearchPlaceVActivity"></activity>
+        <activity android:name=".FindRoadActivity"> </activity>
+        <activity android:name=".IdenBusActivity"> </activity>
+        <activity android:name=".FindRoadResultActivity"> </activity>
+        <activity android:name=".SearchPlaceActivity"> </activity>
+        <activity android:name=".VoiceSearchActivity"> </activity>
+        <activity android:name=".SearchPlaceVActivity"> </activity>
+        <activity android:name=".PathFindActivity"> </activity>
 
         <uses-library android:name="com.google.android.maps" />
         <uses-library
