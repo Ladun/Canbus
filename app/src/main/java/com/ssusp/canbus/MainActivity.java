@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         Button_findRoad.setOnClickListener(new View.OnClickListener() {
            @Override
            public void onClick(View v) {
-               Intent intent = new Intent(com.ssusp.canbus.MainActivity.this, FindRoadActivity.class);
+               Intent intent = new Intent(com.ssusp.canbus.MainActivity.this, PathFindActivity.class);
                startActivity(intent);
            }
         });

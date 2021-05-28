@@ -7,10 +7,10 @@ import androidx.core.content.res.ResourcesCompat;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -61,25 +61,26 @@ import static android.view.View.VISIBLE;
 
 public class PathFindActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private final static String TAG = "MainActivity";
+    private final static String TAG = "PathFindActivity";
 
     private RelativeLayout rl_container;
-    private RelativeLayout rl_another_view;
-    private RelativeLayout rl_route_view;
+    private RelativeLayout rl_another_view; //다른 경로
+    private RelativeLayout rl_route_view; //추천 경로
     private LinearLayout ll_detail_course_container;
-    private LinearLayout ll_traffic_detail_route_container;
+    private LinearLayout ll_traffic_detail_route_container; //상세 경로
     private LinearLayout ll_flow_container;
     private FlowLayout fl_route;
     private FlowLayout fl_another_route;
 
-    private Spinner spinner = null;
+    private Spinner spinner = null;  //드롭다운
     private String[] spinnerArr = null;
     private String selected_spinner = null;
 
-    private EditText dep_loc = null;
-    private EditText arr_loc = null;
-
-    private Button send;
+    private EditText EditText_arrival = null; //출발지 입력
+    private EditText EditText_destination = null; //도착지 입력
+    private Button arrVoice;
+    private Button destVoice;
+    private Button pathFind; //경로 검색
     private ImageButton ib_detail_remove;
 
     private GoogleMap mMap; // 구글 지도
@@ -87,64 +88,80 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
     private Marker end_m; // 도착 마커
     private Marker[][] marker_arr; // 중간 마커 배열
     private LatLng End_location; // 도착 위치 표시
-
     private Drawable img = null;
 
 
     // Directions API 관련 변수
-    private static final String API_KEY = "AIzaSyCP-aqDnF1JpAjpMYqYJXg8PWdJTumBLSo";
-    private String str_url = null; // URL
+    private static final String API_KEY = "AIzaSyAT4SplFnCz5Z8IyVzu2hYFVBs6GaqWyV0";
+    private String str_url = null; // EditText의 값과 원래의 URL을 합쳐 검색 URL을 만들어 저장
     private String option = null;
     private String[] full_time;
     private String[] hours;
     private String[] min;
-    private String departure_lat = null;
-    private String departure_lng = null;
+    private String arrival_lat = null;
+    private String arrival_lng = null;
     private String[][] goingS_lat;
     private String[][] goingS_lng;
     private String[][] goingE_lat;
     private String[][] goingE_lng;
-    private String arrival_lat = null;
-    private String arrival_lng = null;
+    private String destination_lat = null;
+    private String destination_lng = null;
     private String[][] TransitName;
     private String[][] getPolyline;
     private String[][] getInstructions;
     private String[][] step = null;
     private String getOverview = null;
-    private String REQUEST_DEP = null;
     private String REQUEST_ARR = null;
+    private String REQUEST_DEST = null;
 
     private int r_list_len = 0;
     private int[] list_len = null;
     private int fl_count = 0;
     private int R_fl_count = 0;
 
+    private void initAllComponent() {
+
+        EditText_arrival = findViewById(R.id.EditText_arrival);
+        EditText_destination = findViewById(R.id.EditText_destination);
+        pathFind = findViewById(R.id.pathFind);
+        ib_detail_remove = findViewById(R.id.ib_detail_remove);
+        rl_container = findViewById(R.id.rl_container);
+        fl_route = findViewById(R.id.fl_route);
+        rl_route_view = findViewById(R.id.rl_route_view);
+        rl_another_view = findViewById(R.id.rl_another_view);
+        ll_flow_container = findViewById(R.id.ll_flow_container);
+        ll_detail_course_container = findViewById(R.id.ll_detail_course_container);
+        ll_traffic_detail_route_container = findViewById(R.id.ll_traffic_detail_route_container);
+        arrVoice = findViewById(R.id.arrVoice);
+        destVoice = findViewById(R.id.destVoice);
+
+
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_path_find);
 
         initView();
-
         initAllComponent();
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
 
             if (extras != null) {
-                REQUEST_DEP = extras.getString("from");
-                REQUEST_ARR = extras.getString("to");
+                REQUEST_ARR = extras.getString("from");
+                REQUEST_DEST = extras.getString("to");
 
-                dep_loc.setText(REQUEST_DEP);
-                arr_loc.setText(REQUEST_ARR);
+                EditText_arrival.setText(REQUEST_ARR);
+                EditText_destination.setText(REQUEST_DEST);
             }
         }
 
-        dep_loc.setOnKeyListener(new View.OnKeyListener() {
+        EditText_arrival.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int KeyCode, KeyEvent event) {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) && KeyCode == KeyEvent.KEYCODE_ENTER) {
-                    EditText enter_action = findViewById(R.id.arrive_loc);
+                    EditText enter_action = findViewById(R.id.EditText_destination);
 
                     enter_action.requestFocus();
                     return true;
@@ -153,18 +170,18 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             }
         });
 
-        arr_loc.setOnKeyListener(new View.OnKeyListener() {
+        EditText_destination.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int KeyCode, KeyEvent event) {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) && KeyCode == KeyEvent.KEYCODE_ENTER) {
-                    send.performClick();
+                    pathFind.performClick();
                     return true;
                 }
                 return false;
             }
         });
 
-        send.setOnClickListener(new Button.OnClickListener() {
+        pathFind.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View view) {
 
@@ -175,12 +192,11 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
                 rl_container.setVisibility(VISIBLE);
 
-                String depart = dep_loc.getText().toString();
-                String arrival = arr_loc.getText().toString();
+                String arrival = EditText_arrival.getText().toString();
+                String destination = EditText_destination.getText().toString();
 
-                if (!depart.isEmpty() && !arrival.isEmpty()) {
-
-                    directions(depart, arrival);
+                if (!arrival.isEmpty() && !destination.isEmpty()) {
+                    directions(arrival, destination);
 
                     if (getOverview != null) {
                         ArrayList<LatLng> entire_path = decodePolyPoints(getOverview);
@@ -194,7 +210,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         }
 
                         Polyline line = null;
-
                         if (line == null) {
                             line = mMap.addPolyline(new PolylineOptions()
                                     .color(Color.rgb(58, 122, 255))
@@ -215,9 +230,9 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                     }
 
                 } else {
-                    if (!depart.isEmpty() && arrival.isEmpty())
+                    if (!arrival.isEmpty() && destination.isEmpty())
                         Toast.makeText(getApplicationContext(), "도착지를 작성해주세요.", Toast.LENGTH_SHORT).show();
-                    else if (depart.isEmpty() && !arrival.isEmpty())
+                    else if (arrival.isEmpty() && !destination.isEmpty())
                         Toast.makeText(getApplicationContext(), "출발지를 작성해주세요.", Toast.LENGTH_SHORT).show();
                     else
                         Toast.makeText(getApplicationContext(), "출발지와 도착지를 작성해주세요.", Toast.LENGTH_SHORT).show();
@@ -225,6 +240,23 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
             }
         });
+
+        arrVoice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(com.ssusp.canbus.PathFindActivity.this, VoiceSearchActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        destVoice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(com.ssusp.canbus.PathFindActivity.this, VoiceSearchActivity.class);
+                startActivity(intent);
+            }
+        });
+
 
         ib_detail_remove.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -235,26 +267,12 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
     }
 
-    private void initAllComponent() {
-
-        dep_loc = findViewById(R.id.depart_loc);
-        arr_loc = findViewById(R.id.arrive_loc);
-        send = findViewById(R.id.send);
-        ib_detail_remove = findViewById(R.id.ib_detail_remove);
-        rl_container = findViewById(R.id.rl_container);
-        fl_route = findViewById(R.id.fl_route);
-        rl_route_view = findViewById(R.id.rl_route_view);
-        rl_another_view = findViewById(R.id.rl_another_view);
-        ll_flow_container = findViewById(R.id.ll_flow_container);
-        ll_detail_course_container = findViewById(R.id.ll_detail_course_container);
-        ll_traffic_detail_route_container = findViewById(R.id.ll_traffic_detail_route_container);
-
-    }
-
+//드롭다운 최적경로, 최소도보, 최소환승
     private void initView() {
         spinner = findViewById(R.id.spinner_menu);
         spinnerArr = getResources().getStringArray(R.array.traffic);
@@ -321,20 +339,14 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                 String routes = jsonObject.getString("routes");
 
                 if (routes.isEmpty()) { // 경로가 존재하지 않는다면
-
                     Toast.makeText(getApplicationContext(), "경로가 존재하지 않습니다.", Toast.LENGTH_SHORT).show();
                     System.out.println("경로 x");
-
                 }
                 JSONArray routesArray = new JSONArray(routes);
-
                 r_list_len = routesArray.length();
-
                 if(r_list_len <= 0) {
-
                     Toast.makeText(getApplicationContext(), "경로가 존재하지 않습니다.", Toast.LENGTH_SHORT).show();
                     System.out.println("경로 x");
-
                 } else if (r_list_len > 0) {
 
                     list_len = new int[r_list_len]; // route의 개수만큼 배열 동적 생성
@@ -423,9 +435,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             time.setLayoutParams(params);
                             time.setTextSize(28);
 
-                            Typeface typeface = Typeface.createFromAsset(getAssets(), "font/nanumsquare.ttf");
-                            time.setTypeface(typeface);
-
                             time.setTextColor(Color.BLACK);
                             time.setBackgroundColor(Color.YELLOW);
                             time.setPadding(5, 0, 5, 0);
@@ -468,11 +477,11 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             String end_location = stepsObject.getString("end_location");
                             JSONObject endJsonObject = new JSONObject(end_location);
                             if (i >= list_len[j] - 1) {
-                                arrival_lat = endJsonObject.getString("lat");
-                                arrival_lng = endJsonObject.getString("lng");
+                                destination_lat = endJsonObject.getString("lat");
+                                destination_lng = endJsonObject.getString("lng");
 
-                                Double End_lat = Double.parseDouble(arrival_lat);
-                                Double End_lng = Double.parseDouble(arrival_lng);
+                                Double End_lat = Double.parseDouble(destination_lat);
+                                Double End_lng = Double.parseDouble(destination_lng);
                                 End_location = new LatLng(End_lat, End_lng);
                             } else {
                                 goingE_lat[j][i] = endJsonObject.getString("lat");
@@ -482,8 +491,8 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             String start_location = stepsObject.getString("start_location");
                             JSONObject startJsonObject = new JSONObject(start_location);
                             if (i == 0) {
-                                departure_lat = startJsonObject.getString("lat");
-                                departure_lng = startJsonObject.getString("lng");
+                                arrival_lat = startJsonObject.getString("lat");
+                                arrival_lng = startJsonObject.getString("lng");
                             } else {
                                 goingS_lat[j][i] = startJsonObject.getString("lat");
                                 goingS_lng[j][i] = startJsonObject.getString("lng");
@@ -579,6 +588,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
     }
 
+    //over_view 폴리라인 포인트 디코드 필요
     public static ArrayList<LatLng> decodePolyPoints(String encodedPath) {
         int len = encodedPath.length();
 
@@ -613,18 +623,16 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
         return path;
     }
 
+    //동적 텍스트뷰 생성 함수
     public void method_view(String t, Drawable img, int j, int i) {
 
         TextView ith_route = null;
         String t_str = step[j][i].split(" ")[0];
-        if (j == 0) { // j가 0이라면 추천 경로이므로
+        if (j == 0) { // j가 0이라면 추천 경로
 
             ith_route = new TextView(this);
             ith_route.setText(step[j][i]);
             ith_route.setTextSize(22);
-
-            Typeface typeface = Typeface.createFromAsset(getAssets(), "font/nanumsquare.ttf");
-            ith_route.setTypeface(typeface);
 
             ith_route.setTextColor(Color.BLACK);
 
@@ -651,8 +659,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             ith_route.setTextSize(22);
             ith_route.setTextColor(Color.BLACK);
 
-            Typeface typeface = Typeface.createFromAsset(getAssets(), "font/nanumsquare.ttf");
-            ith_route.setTypeface(typeface);
 
             int h = 130;
             int w = 130;
@@ -678,10 +684,10 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
                 mMap.clear();
 
-                double dlatitude = Double.parseDouble(departure_lat);
-                double dlngtitude = Double.parseDouble(departure_lng);
+                double alatitude = Double.parseDouble(arrival_lat);
+                double alngtitude = Double.parseDouble(arrival_lng);
 
-                LatLng Start = new LatLng(dlatitude, dlngtitude);
+                LatLng Start = new LatLng(alatitude, alngtitude);
 
                 start_m = mMap.addMarker(new MarkerOptions().position(Start).title("출발"));
 
@@ -695,8 +701,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                     LinearLayout.LayoutParams params1 = (LinearLayout.LayoutParams) tv_method_course.getLayoutParams();
                     params1.gravity = Gravity.LEFT;
                     tv_method_course.setLayoutParams(params1);
-                    Typeface typeface = Typeface.createFromAsset(getAssets(), "font/nanumsquare.ttf");
-                    tv_method_course.setTypeface(typeface);
                     tv_method_course.setBackgroundColor(Color.WHITE);
                     tv_method_course.setPadding(25, 25, 25, 25);
                     ll_traffic_detail_route_container.addView(tv_method_course);
@@ -711,7 +715,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                     params2.setMargins(0, 0, 0, 30);
                     tv_detail_course.setLayoutParams(params2);
                     tv_detail_course.setPadding(5, 5, 20, 15);
-                    tv_detail_course.setTypeface(typeface);
                     ll_traffic_detail_route_container.addView(tv_detail_course);
 
                     ArrayList<LatLng> path_points = decodePolyPoints(getPolyline[no][i]); // 폴리라인 포인트 디코드 후 ArrayList에 저장
@@ -761,7 +764,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             }
                             marker_arr[1][i] = mMap.addMarker(new MarkerOptions().position(GoingE).title(Transit_n + " 하차"));
                         }
-
                         onMapReady(mMap);
                     }
 
@@ -788,28 +790,21 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         } else {
                             marker_arr[0][i] = mMap.addMarker(new MarkerOptions().position(GoingS).title(Transit_n + " 승차"));
                         }
-
                         onMapReady(mMap);
                     }
                 }
 
-                double alatitude = Double.parseDouble(arrival_lat);
-                double alngtitude = Double.parseDouble(arrival_lng);
-
-                LatLng End = new LatLng(alatitude, alngtitude);
-
+                double dlatitude = Double.parseDouble(destination_lat);
+                double dlngtitude = Double.parseDouble(destination_lng);
+                LatLng End = new LatLng(dlatitude, dlngtitude);
                 end_m = mMap.addMarker(new MarkerOptions().position(End).title("도착"));
-
                 onMapReady(mMap);
-
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(End));
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-
             }
         });
-
     }
-
+/********************************위치 퍼미션 및 이동 ********************************/
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -826,8 +821,8 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             checkLocationPermissionWithRationale();
         }
     }
-
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
     //위치정보 사용여부 확인
     private void checkLocationPermissionWithRationale() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -846,6 +841,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             }
         }
     }
+
     //현위치로 중심 이동
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -863,8 +859,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             }
         }
     }
-
-
 
     public class Task extends AsyncTask<String, Void, String> {
 
@@ -896,7 +890,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             return receiveMsg;
         }
     }

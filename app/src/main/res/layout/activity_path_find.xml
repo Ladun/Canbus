@@ -36,71 +36,98 @@
 
 
                 <EditText
-                    android:id="@+id/depart_loc"
-                    android:layout_width="230dp"
+                    android:id="@+id/EditText_arrival"
+                    android:layout_width="250dp"
                     android:layout_height="40dp"
                     android:background="#FFC400"
                     android:gravity="center"
-                    android:hint="출발지"
+                    android:hint="출발지를 입력하세요"
                     android:inputType="text"
                     android:textColor="#000000"
-                    android:textSize="18sp"
-                    android:privateImeOptions="defaultInputmode=korean"
-                    />
+                    android:textSize="18sp" />
 
                 <Spinner
                     android:id="@+id/spinner_menu"
-                    android:layout_width="120dp"
+                    android:layout_width="110dp"
                     android:layout_height="40dp"
+                    android:layout_below="@+id/EditText_destination"
                     android:layout_alignParentEnd="true"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
                     android:layout_marginEnd="10dp"
-                    android:layout_toEndOf="@+id/depart_loc"
                     android:background="@null"
                     android:entries="@array/traffic"
                     android:spinnerMode="dropdown" />
 
                 <EditText
-                    android:id="@+id/arrive_loc"
-                    android:layout_width="230dp"
+                    android:id="@+id/EditText_destination"
+                    android:layout_width="250dp"
                     android:layout_height="40dp"
-                    android:layout_below="@+id/depart_loc"
-                    android:layout_marginTop="7dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginTop="50dp"
                     android:background="#FFC400"
                     android:gravity="center"
-                    android:hint="도착지"
+                    android:hint="도착지를 입력하세요"
                     android:inputType="text"
                     android:textColor="#000000"
-                    android:textSize="18sp"
-                    android:privateImeOptions="defaultInputmode=korean"
-                    />
+                    android:textSize="18sp" />
 
                 <Button
-                    android:id="@+id/send"
-                    android:layout_width="100dp"
-                    android:layout_height="39dp"
-                    android:layout_below="@id/spinner_menu"
-                    android:layout_alignParentEnd="true"
+                    android:id="@+id/pathFind"
+                    android:layout_width="250dp"
+                    android:layout_height="40dp"
+                    android:layout_below="@+id/EditText_destination"
+                    android:layout_alignParentStart="true"
                     android:layout_gravity="right"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="10dp"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginTop="10dp"
                     android:layout_marginBottom="17dp"
-                    android:layout_toEndOf="@+id/arrive_loc"
-                    android:background="#FFC400"
+                    android:background="#FFEEB5"
                     android:gravity="center"
-                    android:text="검색"
+                    android:text="경로검색"
                     android:textColor="#000000"
                     android:textSize="20sp" />
 
-                <fragment
+                <Button
+                    android:id="@+id/arrVoice"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_gravity="right"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="17dp"
+                    android:layout_toEndOf="@+id/EditText_destination"
+                    android:background="#FFFFFF"
+                    android:gravity="center"
+                    android:text="음성검색"
+                    android:textColor="#000000"
+                    android:textSize="20sp" />
+
+                <Button
+                    android:id="@+id/destVoice"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_gravity="right"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginTop="50dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="17dp"
+                    android:layout_toEndOf="@+id/EditText_destination"
+                    android:background="#FFFFFF"
+                    android:gravity="center"
+                    android:text="음성검색"
+                    android:textColor="#000000"
+                    android:textSize="20sp" />
+
+                <androidx.fragment.app.FragmentContainerView
                     android:id="@+id/map"
                     android:name="com.google.android.gms.maps.SupportMapFragment"
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
-                    android:layout_below="@+id/send"
-                    tools:context=".TrafficSearchActivity" />
+                    android:layout_below="@+id/pathFind"
+                    tools:context=".PathFindActivity" />
 
                 <ScrollView
                     android:layout_width="match_parent"
@@ -170,8 +197,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="다른 경로 더 보기"
                                 android:textColor="#000000"
-                                android:textSize="16sp"
-                                />
+                                android:textSize="16sp" />
 
                             <LinearLayout
                                 android:id="@+id/ll_flow_container"

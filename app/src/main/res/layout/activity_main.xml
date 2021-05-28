@@ -17,18 +17,20 @@
         android:id="@+id/Button_findRoad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#ffff00"
         android:layout_margin="12dp"
-        android:textSize="20sp"
-        android:text="길찾기"/>
+        android:background="#ffff00"
+        android:text="길찾기"
+        android:textColor="#000000"
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/Button_idenBusNum"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#ffff00"
         android:layout_margin="12dp"
-        android:textSize="20sp"
-        android:text="버스 번호 인식"/>
+        android:background="#ffff00"
+        android:text="버스 번호 인식"
+        android:textColor="#000000"
+        android:textSize="20sp" />
 
 </LinearLayout>
