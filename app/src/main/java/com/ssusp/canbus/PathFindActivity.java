@@ -92,7 +92,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
 
     // Directions API 관련 변수
-    private static final String API_KEY = "AIzaSyAT4SplFnCz5Z8IyVzu2hYFVBs6GaqWyV0";
+    private static final String API_KEY = "AIzaSyCP-aqDnF1JpAjpMYqYJXg8PWdJTumBLSo";
     private String str_url = null; // EditText의 값과 원래의 URL을 합쳐 검색 URL을 만들어 저장
     private String option = null;
     private String[] full_time;
@@ -309,9 +309,9 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
         });
     }
 
-    public void directions(String depart, String arrival) {
+    public void directions(String arrival, String destination) {
 
-        str_url = "https://maps.googleapis.com/maps/api/directions/json?"+"origin="+depart+"&destination="+arrival+"&mode=transit"+"&departure_time=now"+option+"&alternatives=true&language=Korean&key="+API_KEY;
+        str_url = "https://maps.googleapis.com/maps/api/directions/json?"+"origin="+arrival+"&destination="+destination+"&mode=transit"+"&departure_time=now"+option+"&alternatives=true&language=Korean&key="+API_KEY;
 
         System.out.println(str_url);
 
@@ -449,7 +449,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         fl_another_route.setLayoutParams(param);
 
                         fl_another_route.setOrientation(FlowLayout.HORIZONTAL);
-                        fl_another_route.setBackgroundColor(Color.WHITE);
+                        fl_another_route.setBackgroundColor(Color.YELLOW);
                         ll_flow_container.addView(fl_another_route);
 
                         String steps = legJsonObject.getString("steps");
@@ -458,8 +458,8 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         String[] getTravelMode = new String[list_len[j]]; // j번째 route의 step 수만큼 배열 동적 생성
                         String isTrain = null;
                         String[] getDuration = new String[list_len[j]];
+                        String[] destination_name = new String[list_len[j]];
                         String[] arrival_name = new String[list_len[j]];
-                        String[] depart_name = new String[list_len[j]];
                         String[] getTransit = new String[list_len[j]];
                         getInstructions[j] = new String[list_len[j]];
                         step[j] = new String[list_len[j]];
@@ -514,22 +514,22 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
                                 String arrival_stop = transitObject.getString("arrival_stop");
                                 JSONObject arrivalObject = new JSONObject(arrival_stop);
-                                arrival_name[i] = arrivalObject.getString("name");
+                                destination_name[i] = arrivalObject.getString("name");
 
                                 String depart_stop = transitObject.getString("departure_stop");
                                 JSONObject departObject = new JSONObject(depart_stop);
-                                depart_name[i] = departObject.getString("name");
+                                arrival_name[i] = departObject.getString("name");
 
                                 String line = transitObject.getString("line");
                                 JSONObject lineObject = new JSONObject(line);
                                 if (isTrain.equals("기차")) {
                                     getTransit[i] = lineObject.getString("name");
-                                } else if (isTrain.equals("지하철")) {
+                                } else if (isTrain.equals("Subway")) {
                                     getTransit[i] = lineObject.getString("short_name");
-                                    if (isTrain.equals("지하철") && getTransit[i].equals("1")) {
+                                    if (isTrain.equals("Subway") && getTransit[i].equals("1")) {
                                         getTransit[i] += "호선";
                                     }
-                                } else if (isTrain.equals("버스")) {
+                                } else if (isTrain.equals("Bus")) {
                                     if(!lineObject.isNull("short_name")) {
                                         getTransit[i] = lineObject.getString("short_name");
                                     } else getTransit[i] = lineObject.getString("name");
@@ -559,11 +559,10 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             Resources res = getResources();
 
                             switch (isTrain) {
-                                case "기차":
-                                case "지하철":
+                                case "Subway":
                                     img = ResourcesCompat.getDrawable(res, R.drawable.subway, null);
                                     break;
-                                case "버스":
+                                case "Bus":
                                     img = ResourcesCompat.getDrawable(res, R.drawable.bus, null);
                                     break;
                                 default:
@@ -701,7 +700,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                     LinearLayout.LayoutParams params1 = (LinearLayout.LayoutParams) tv_method_course.getLayoutParams();
                     params1.gravity = Gravity.LEFT;
                     tv_method_course.setLayoutParams(params1);
-                    tv_method_course.setBackgroundColor(Color.WHITE);
+                    tv_method_course.setBackgroundColor(Color.YELLOW);
                     tv_method_course.setPadding(25, 25, 25, 25);
                     ll_traffic_detail_route_container.addView(tv_method_course);
 
