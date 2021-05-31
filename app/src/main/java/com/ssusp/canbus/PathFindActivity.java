@@ -436,7 +436,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             time.setTextSize(28);
 
                             time.setTextColor(Color.BLACK);
-                            time.setBackgroundColor(Color.YELLOW);
+                            time.setBackgroundColor(Color.WHITE);
                             time.setPadding(5, 0, 5, 0);
 
                             ll_flow_container.addView(time);
@@ -449,7 +449,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         fl_another_route.setLayoutParams(param);
 
                         fl_another_route.setOrientation(FlowLayout.HORIZONTAL);
-                        fl_another_route.setBackgroundColor(Color.YELLOW);
+                        fl_another_route.setBackgroundColor(Color.WHITE);
                         ll_flow_container.addView(fl_another_route);
 
                         String steps = legJsonObject.getString("steps");
@@ -522,17 +522,20 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
                                 String line = transitObject.getString("line");
                                 JSONObject lineObject = new JSONObject(line);
-                                if (isTrain.equals("기차")) {
+                                if (isTrain.equals("Train")) {
                                     getTransit[i] = lineObject.getString("name");
-                                } else if (isTrain.equals("Subway")) {
+                                }
+                                else if (isTrain.equals("Subway")) {
                                     getTransit[i] = lineObject.getString("short_name");
                                     if (isTrain.equals("Subway") && getTransit[i].equals("1")) {
                                         getTransit[i] += "호선";
                                     }
-                                } else if (isTrain.equals("Bus")) {
+                                }
+                                else if (isTrain.equals("Bus")) {
                                     if(!lineObject.isNull("short_name")) {
                                         getTransit[i] = lineObject.getString("short_name");
-                                    } else getTransit[i] = lineObject.getString("name");
+                                    }
+                                    else getTransit[i] = lineObject.getString("name");
                                 }
                                 TransitName[j][i] = getTransit[i];
 
@@ -559,6 +562,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             Resources res = getResources();
 
                             switch (isTrain) {
+                                case "Train":
                                 case "Subway":
                                     img = ResourcesCompat.getDrawable(res, R.drawable.subway, null);
                                     break;
@@ -626,7 +630,6 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
     public void method_view(String t, Drawable img, int j, int i) {
 
         TextView ith_route = null;
-        String t_str = step[j][i].split(" ")[0];
         if (j == 0) { // j가 0이라면 추천 경로
 
             ith_route = new TextView(this);
@@ -700,7 +703,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                     LinearLayout.LayoutParams params1 = (LinearLayout.LayoutParams) tv_method_course.getLayoutParams();
                     params1.gravity = Gravity.LEFT;
                     tv_method_course.setLayoutParams(params1);
-                    tv_method_course.setBackgroundColor(Color.YELLOW);
+                    tv_method_course.setBackgroundColor(Color.WHITE);
                     tv_method_course.setPadding(25, 25, 25, 25);
                     ll_traffic_detail_route_container.addView(tv_method_course);
 
