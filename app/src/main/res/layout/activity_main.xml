@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
-        android:background="#ffff00"
+        android:background="#FBC02D"
         android:text="길찾기"
         android:textColor="#000000"
         android:textSize="20sp" />
@@ -28,7 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
-        android:background="#ffff00"
+        android:background="#FBC02D"
         android:text="버스 번호 인식"
         android:textColor="#000000"
         android:textSize="20sp" />
