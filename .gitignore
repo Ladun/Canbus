@@ -14,3 +14,5 @@
 .cxx
 
 */**/assets/*.tflite
+*/**/assets/*.pb
+opencv/*

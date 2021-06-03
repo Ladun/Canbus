@@ -8,15 +8,11 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -45,25 +41,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.googlecode.tesseract.android.TessBaseAPI;
 import com.ssusp.canbus.customview.AutoFitTextureView;
 import com.ssusp.canbus.customview.OverlayView;
 import com.ssusp.canbus.env.ImageUtils;
 import com.ssusp.canbus.tflite.BusInformation;
+import com.ssusp.canbus.tflite.BusNumberClassifier;
 import com.ssusp.canbus.tflite.Classifier;
 import com.ssusp.canbus.tflite.MultiBoxTracker;
 import com.ssusp.canbus.tflite.YoloV5Classifier;
 //opencv라이브러리-이미지 전처리
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.android.OpenCVLoader;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -216,14 +205,18 @@ public class DetectActivity extends AppCompatActivity
     private MultiBoxTracker tracker;
     OverlayView trackingOverlay;
 
-    // Tesseract Properties ---------------------
-    private TessBaseAPI tess;
-    String dataPath="";
+    // BusNumber Properties ---------------------
+    private static final int BUS_NUMBER_INPUT_SIZE = 54;
+    private static final String BUS_NUMBER_MODEL_FILE = "busnum.pb";
+    private BusNumberClassifier numberClassifier;
+    private Bitmap numCroppedBitmap = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detect);
+
+        OpenCVLoader.initDebug();
 
         textureView = findViewById(R.id.textureView);
 
@@ -235,8 +228,7 @@ public class DetectActivity extends AppCompatActivity
 
         if(allPermissionGranted()){
             startCamera();
-
-            initTesseract();
+//            initTesseract();
         }
         else{
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
@@ -315,72 +307,87 @@ public class DetectActivity extends AppCompatActivity
 
     // ------------------------------------- Tesseract Functions -------------------------------------
 
-    private void initTesseract(){
-        String lang = "kor";
-        dataPath = getFilesDir().toString();
-        checkFile(new File(dataPath + "/tessdata/"), lang);
+//    private void initTesseract(){
+//        String lang = "kor";
+//        dataPath = getFilesDir().toString();
+//        checkFile(new File(dataPath + "/tessdata/"), lang);
+//
+//        tess = new TessBaseAPI();
+//        tess.init(dataPath, lang);
+//    }
+//
+//    private void checkFile(File dir, String lang) {
+//        if (!dir.exists()) {
+//            dir.mkdirs();
+//        }
+//        String datafilePath = dataPath+ "/tessdata/" + lang + ".traineddata";
+//        File datafile = new File(datafilePath);
+//        if (!datafile.exists()) {
+//            copyFiles(lang);
+//        }
+//    }
+//
+//    private void copyFiles(String lang){
+//        try{
+//            String filepath=dataPath + "/tessdata/"+lang+".traineddata";
+//
+//            AssetManager assetManager=getAssets();
+//
+//            InputStream inStream=assetManager.open("tessdata/"+lang+".traineddata");
+//            OutputStream outStream=new FileOutputStream(filepath);
+//
+//            byte[] buffer=new byte[1024];
+//            int read;
+//            while((read=inStream.read(buffer))!=-1)
+//            {
+//                outStream.write(buffer,0,read);
+//            }
+//            outStream.flush();
+//            outStream.close();
+//        }catch(FileNotFoundException e) {
+//            e.printStackTrace();
+//        }catch(IOException e){
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public String processTesseract(Bitmap bitmap){
+//        // Toast.makeText(getApplicationContext(),"checking...",Toast.LENGTH_LONG).show();
+//        String result = null;
+//        Mat matBase=new Mat();
+//        //bitmap to mat
+//        Utils.bitmapToMat(bitmap ,matBase);
+//        //gray 스케일;
+//        Mat matGray = new Mat();
+//        Imgproc.cvtColor(matBase, matGray, Imgproc.COLOR_BGR2GRAY);
+//        //blur처리;
+//        Mat matBlur = new Mat();
+//        Imgproc.bilateralFilter(matGray,matBlur,5,75,75);
+//        //thresh hold;
+//        Mat matResult=new Mat();
+//        Imgproc.threshold(matGray, matResult, 160, 255, Imgproc.THRESH_BINARY);
+//
+//
+//        Bitmap bitResult= Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
+//        //mat to bitmap
+//        Utils.matToBitmap(matResult, bitResult);
+//        tess.setImage(bitResult);
+//        result=tess.getUTF8Text();
+//
+//        return result;
+//    }
 
-        tess = new TessBaseAPI();
-        tess.init(dataPath, lang);
-    }
+    public String processBusNum(Bitmap bitmap){
+        Matrix frameToNumCropTransform =
+                ImageUtils.getTransformationMatrix(
+                        bitmap.getWidth(), bitmap.getHeight(),
+                        BUS_NUMBER_INPUT_SIZE, BUS_NUMBER_INPUT_SIZE,
+                        sensorOrientation, false);
 
-    private void checkFile(File dir, String lang) {
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        String datafilePath = dataPath+ "/tessdata/" + lang + ".traineddata";
-        File datafile = new File(datafilePath);
-        if (!datafile.exists()) {
-            copyFiles(lang);
-        }
-    }
+        final Canvas canvas = new Canvas(numCroppedBitmap);
+        canvas.drawBitmap(bitmap, frameToNumCropTransform, null);
 
-    private void copyFiles(String lang){
-        try{
-            String filepath=dataPath + "/tessdata/"+lang+".traineddata";
-
-            AssetManager assetManager=getAssets();
-
-            InputStream inStream=assetManager.open("tessdata/"+lang+".traineddata");
-            OutputStream outStream=new FileOutputStream(filepath);
-
-            byte[] buffer=new byte[1024];
-            int read;
-            while((read=inStream.read(buffer))!=-1)
-            {
-                outStream.write(buffer,0,read);
-            }
-            outStream.flush();
-            outStream.close();
-        }catch(FileNotFoundException e) {
-            e.printStackTrace();
-        }catch(IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    public String processTesseract(Bitmap bitmap){
-        // Toast.makeText(getApplicationContext(),"checking...",Toast.LENGTH_LONG).show();
-        String result = null;
-        Mat matBase=new Mat();
-        //bitmap to mat
-        Utils.bitmapToMat(bitmap ,matBase);
-        //gray 스케일;
-        Mat matGray = new Mat();
-        Imgproc.cvtColor(matBase, matGray, Imgproc.COLOR_BGR2GRAY);
-        //blur처리;
-        Mat matBlur = new Mat();
-        Imgproc.bilateralFilter(matGray,matBlur,5,75,75);
-        //thresh hold;
-        Mat matResult=new Mat();
-        Imgproc.threshold(matGray, matResult, 160, 255, Imgproc.THRESH_BINARY);
-
-            
-        Bitmap bitResult= Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
-        //mat to bitmap
-        Utils.matToBitmap(matResult, bitResult);
-        tess.setImage(bitResult);
-        result=tess.getUTF8Text();
+        String result = numberClassifier.recognizeImage(numCroppedBitmap);
 
         return result;
     }
@@ -398,7 +405,7 @@ public class DetectActivity extends AppCompatActivity
     }
 
     public void BusInfoSpeech(){
-        if(mBusInformations.size() == 0)
+        if(mBusInformations != null && mBusInformations.size() == 0)
             return;
 
         List<BusInformation> busInformations = mBusInformations;
@@ -538,13 +545,13 @@ public class DetectActivity extends AppCompatActivity
                             cropToFrameTransform.mapRect(location);
                             Log.d("ROI_TEST", result.getDetectedClass() + ": " +location);
 
-                            c.drawBitmap(
-                                    Bitmap.createBitmap(
-                                            rgbFrameBitmap,
-                                            (int)location.left, (int)location.top,
-                                            (int)location.width(), (int)location.height(),
-                                            rotateMatrix, true
-                                    ),
+                            int l = (int)Math.max(0, location.left - 10);
+                            int t = (int)Math.max(0, location.top - 10);
+                            int w = (int)Math.min(origin.getWidth(), location.width() + 20);
+                            int h = (int)Math.min(origin.getHeight(), location.height() + 20);
+
+                            Bitmap numberROI = Bitmap.createBitmap(rgbFrameBitmap, l, t, w, h, rotateMatrix, true);
+                            c.drawBitmap(numberROI,
                                     location.left, location.top,
                                     null
                             );
@@ -613,8 +620,13 @@ public class DetectActivity extends AppCompatActivity
                     final RectF location = r.getLocation();
                     cropToFrameTransform.mapRect(location);
 
-                    Bitmap numberROI = Bitmap.createBitmap(origin, (int) location.left, (int) location.top, (int) location.width(), (int) location.height(), rotateMatrix, true);
-                    String number = processTesseract(numberROI);
+                    int l = (int)Math.max(0, location.left - 10);
+                    int t = (int)Math.max(0, location.top - 10);
+                    int w = (int)Math.min(origin.getWidth(), location.width() + 20);
+                    int h = (int)Math.min(origin.getHeight(), location.height() + 20);
+
+                    Bitmap numberROI = Bitmap.createBitmap(origin, l, t, w, h, rotateMatrix, true);
+                    String number = processBusNum(numberROI);
                     busInformations.get(idx).addNumber(number);
                 }
             }
@@ -643,18 +655,30 @@ public class DetectActivity extends AppCompatActivity
             toast.show();
             finish();
         }
+        try {
+            numberClassifier = BusNumberClassifier.create(this, BUS_NUMBER_MODEL_FILE);
 
-        int cropSize = TF_OD_API_INPUT_SIZE;
-        Integer sensorOrientation = rotation - getScreenOrientation();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast toast =
+                    Toast.makeText(
+                            getApplicationContext(), "Detector could not be initialized", Toast.LENGTH_SHORT);
+            toast.show();
+            finish();
+        }
+
+
+        sensorOrientation = rotation - getScreenOrientation();
 
         rgbFrameBitmap = Bitmap.createBitmap(size.getWidth(), size.getHeight(), Bitmap.Config.ARGB_8888);
-        croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888);
+        croppedBitmap = Bitmap.createBitmap(TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE, Bitmap.Config.ARGB_8888);
+        numCroppedBitmap = Bitmap.createBitmap(BUS_NUMBER_INPUT_SIZE, BUS_NUMBER_INPUT_SIZE, Bitmap.Config.ARGB_8888);
 
         Log.d("Rotation", sensorOrientation + ", " + rotation + ", " + getScreenOrientation());
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
                         size.getWidth(), size.getHeight(),
-                        cropSize, cropSize,
+                        TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE,
                         sensorOrientation, false);
 
         cropToFrameTransform = new Matrix();
