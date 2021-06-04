@@ -1,15 +1,25 @@
 package com.ssusp.canbus;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.ssusp.canbus.R;
 
 public class MainActivity extends AppCompatActivity {
+    // Permissions
+    public static final int REQUEST_CODE_PERMISSIONS = 1001;
+    public final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA"};
 
     Button Button_findRoad, Button_idenBusNum;
 
@@ -38,5 +48,36 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+
+        if (!allPermissionGranted()) {
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
+        }
+    }
+
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            Log.d("Check123",  "onRequestPermissionsResult : Check");
+
+            if (!allPermissionGranted()) {
+                Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show();
+                this.finish();
+            }
+        }
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
+
+    private boolean allPermissionGranted(){
+        for(String permission : REQUIRED_PERMISSIONS){
+            Log.d("Check123", permission + ": Check");
+            if(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED){
+                return false;
+            }
+        }
+        return true;
     }
 }
