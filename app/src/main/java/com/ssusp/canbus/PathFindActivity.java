@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -272,7 +273,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
     }
 
-//드롭다운 최적경로, 최소도보, 최소환승
+    //드롭다운 최적경로, 최소도보, 최소환승
     private void initView() {
         spinner = findViewById(R.id.spinner_menu);
         spinnerArr = getResources().getStringArray(R.array.traffic);
@@ -412,9 +413,9 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         String amountDuration = legdurObject.getString("text");
                         String[] set_time = amountDuration.split(" ").clone();
                         for (int k = 0; k < set_time.length; k++) {
-                            if (set_time[k].contains("시간") || set_time[k].equals("hours")) {
+                            if (set_time[k].contains("시간") || set_time[k].contains("hours")) {
                                 hours[j] = set_time[k];
-                            } else if (set_time[k].contains("분") || set_time[k].equals("min")) {
+                            } else if (set_time[k].contains("분") || set_time[k].contains("min")) {
                                 min[j] = set_time[k];
                             }
                         }
@@ -433,7 +434,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) time.getLayoutParams();
                             params.gravity = Gravity.RIGHT;
                             time.setLayoutParams(params);
-                            time.setTextSize(28);
+                            time.setTextSize(20);
 
                             time.setTextColor(Color.BLACK);
                             time.setBackgroundColor(Color.WHITE);
@@ -457,6 +458,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
                         String[] getTravelMode = new String[list_len[j]]; // j번째 route의 step 수만큼 배열 동적 생성
                         String isTrain = null;
+                        String isSubway = null;
                         String[] getDuration = new String[list_len[j]];
                         String[] destination_name = new String[list_len[j]];
                         String[] arrival_name = new String[list_len[j]];
@@ -527,7 +529,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                                 }
                                 else if (isTrain.equals("Subway")) {
                                     getTransit[i] = lineObject.getString("short_name");
-                                    if (isTrain.equals("Subway") && getTransit[i].equals("1")) {
+                                    if (getTransit[i].equals("1")) {
                                         getTransit[i] += "호선";
                                     }
                                 }
@@ -537,23 +539,24 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                                     }
                                     else getTransit[i] = lineObject.getString("name");
                                 }
+
                                 TransitName[j][i] = getTransit[i];
 
                             }
 
                             if (i < list_len[j] - 1) {
                                 if (getTravelMode[i].equals("WALKING")) {
-                                    step[j][i] = "도보 " + getDuration[i] + " > ";
+                                    step[j][i] = "도보 (" + getDuration[i] + "분) " + " > ";
 
                                 } else if (getTravelMode[i].equals("TRANSIT")) {
-                                    step[j][i] = getTransit[i] + " > ";
+                                    step[j][i] = getTransit[i] + " (" + getDuration[i] + "분) " + " > ";
                                 }
                             } else {
                                 if (getTravelMode[i].equals("WALKING")) {
-                                    step[j][i] = "도보 " + getDuration[i];
+                                    step[j][i] = "도보 ("+ getDuration[i] + "분) ";
 
                                 } else if (getTravelMode[i].equals("TRANSIT")) {
-                                    step[j][i] = getTransit[i];
+                                    step[j][i] = getTransit[i] + " (" + getDuration[i] + "분) " ;
                                 }
                             }
 
@@ -806,7 +809,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
             }
         });
     }
-/********************************위치 퍼미션 및 이동 ********************************/
+    /********************************위치 퍼미션 및 이동 ********************************/
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
