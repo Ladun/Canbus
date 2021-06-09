@@ -12,3 +12,8 @@
 /captures
 .externalNativeBuild
 .cxx
+
+
+*/**/assets/*.tflite
+*/**/assets/*.pb
+opencv/*
