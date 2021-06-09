@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -63,7 +64,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Semaphore;
+
+import static android.speech.tts.TextToSpeech.ERROR;
 
 public class IdenBusActivity extends AppCompatActivity
         implements ImageReader.OnImageAvailableListener {
@@ -117,12 +121,16 @@ public class IdenBusActivity extends AppCompatActivity
     private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
+    private Bitmap numCroppedBitmap = null;
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
 
     // Detected info variables
     private List<BusInformation> mBusInformations;
+
+    private TextToSpeech tts;
+
 
 
     // Camera Listener Callback
@@ -187,31 +195,10 @@ public class IdenBusActivity extends AppCompatActivity
         }
     };
 
-
-    // Yolov5 Properties ------------------------
-    private static final int TF_OD_API_INPUT_SIZE = 320;
-    private static final boolean TF_OD_API_IS_QUANTIZED = false;
-    private static final String TF_OD_API_MODEL_FILE = "best-img320.tflite";
-    private static final String TF_OD_API_LABELS_FILE = "label_map.txt";
-
-    private Classifier classifier;
-    private Bitmap origin;
-
-//    private MultiBoxTracker tracker;
-//    OverlayView trackingOverlay;
-
-    // BusNumber Properties ---------------------
-    private static final int BUS_NUMBER_INPUT_SIZE = 54;
-    private static final String BUS_NUMBER_MODEL_FILE = "busnum.pb";
-    private BusNumberClassifier numberClassifier;
-    private Bitmap numCroppedBitmap = null;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_iden_bus);
-
-        OpenCVLoader.initDebug();
 
         textureView = findViewById(R.id.textureView);
 
@@ -224,8 +211,28 @@ public class IdenBusActivity extends AppCompatActivity
                 startActivity(intent);
             }
         });
+        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != ERROR) {
+                    // 언어를 선택한다.
+                    tts.setLanguage(Locale.KOREAN);
+                }
+            }
+        });
 
         startCamera();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(tts != null){
+            tts.stop();
+            tts.shutdown();
+            tts = null;
+        }
     }
 
     @Override
@@ -280,13 +287,13 @@ public class IdenBusActivity extends AppCompatActivity
         Matrix frameToNumCropTransform =
                 ImageUtils.getTransformationMatrix(
                         bitmap.getWidth(), bitmap.getHeight(),
-                        BUS_NUMBER_INPUT_SIZE, BUS_NUMBER_INPUT_SIZE,
+                        MyApplication.BUS_NUMBER_INPUT_SIZE, MyApplication.BUS_NUMBER_INPUT_SIZE,
                         sensorOrientation, false);
 
         final Canvas canvas = new Canvas(numCroppedBitmap);
         canvas.drawBitmap(bitmap, frameToNumCropTransform, null);
 
-        String result = numberClassifier.recognizeImage(numCroppedBitmap);
+        String result = ((MyApplication)getApplication()).getBusNumberClassifier().recognizeImage(numCroppedBitmap);
 
         return result;
     }
@@ -296,6 +303,7 @@ public class IdenBusActivity extends AppCompatActivity
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
+
         if(event.getAction() == MotionEvent.ACTION_UP){
             BusInfoSpeech();
         }
@@ -304,7 +312,10 @@ public class IdenBusActivity extends AppCompatActivity
     }
 
     public void BusInfoSpeech(){
-        if(mBusInformations != null && mBusInformations.size() == 0)
+        if(mBusInformations == null || mBusInformations.size() == 0)
+            return;
+
+        if(!((MyApplication)getApplication()).isModelLoaded())
             return;
 
         List<BusInformation> busInformations = mBusInformations;
@@ -325,15 +336,17 @@ public class IdenBusActivity extends AppCompatActivity
             if(i != 0)
                 numberSpeech.append(", ");
         }
-        numberSpeech.append(" 버스가 있습니다.");
+        numberSpeech.append("번 버스가 있습니다.");
 
         // "xx 버스 뒷문이 더 가까이 있습니다."
         // 문에 대한 정보는 가장 가까이 있는 버스만 알려줌
         String doorSpeech = busInformations.get(busInformations.size() - 1).getBusDoorSpeech();
 
         // TODO: TTS 실행
+        tts.speak(numberSpeech.toString(), TextToSpeech.QUEUE_FLUSH, null);
         Log.d(TAG +"_SPEECH", numberSpeech.toString());
         if(doorSpeech.length() != 0) {
+            tts.speak(doorSpeech, TextToSpeech.QUEUE_ADD, null);
             Log.d(TAG + "_SPEECH", doorSpeech);
         }
     }
@@ -407,6 +420,10 @@ public class IdenBusActivity extends AppCompatActivity
             readyForNextImage();
             return;
         }
+
+        if(!((MyApplication)getApplication()).isModelLoaded())
+            return;
+
         computingDetection = true;
         rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewSize.getWidth(), 0, 0, previewSize.getWidth(), previewSize.getHeight());
 
@@ -421,7 +438,7 @@ public class IdenBusActivity extends AppCompatActivity
                     @Override
                     public void run() {
                         final long startTime = SystemClock.uptimeMillis();
-                        final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
+                        final List<Classifier.Recognition> results = ((MyApplication)getApplication()).getYoloClassifier().recognizeImage(croppedBitmap);
 
                         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
@@ -491,46 +508,17 @@ public class IdenBusActivity extends AppCompatActivity
 
     public void onPreviewSizeChosen(final Size size, final int rotation){
 
-        try {
-            classifier = YoloV5Classifier.create(
-                    getAssets(),
-                    TF_OD_API_MODEL_FILE,
-                    TF_OD_API_LABELS_FILE,
-                    TF_OD_API_IS_QUANTIZED,
-                    TF_OD_API_INPUT_SIZE);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast toast =
-                    Toast.makeText(
-                            getApplicationContext(), "Detector could not be initialized", Toast.LENGTH_SHORT);
-            toast.show();
-            finish();
-        }
-        try {
-            numberClassifier = BusNumberClassifier.create(this, BUS_NUMBER_MODEL_FILE);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast toast =
-                    Toast.makeText(
-                            getApplicationContext(), "Detector could not be initialized", Toast.LENGTH_SHORT);
-            toast.show();
-            finish();
-        }
-
-
         sensorOrientation = rotation - getScreenOrientation();
 
         rgbFrameBitmap = android.graphics.Bitmap.createBitmap(size.getWidth(), size.getHeight(), android.graphics.Bitmap.Config.ARGB_8888);
-        croppedBitmap = android.graphics.Bitmap.createBitmap(TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE, android.graphics.Bitmap.Config.ARGB_8888);
-        numCroppedBitmap = android.graphics.Bitmap.createBitmap(BUS_NUMBER_INPUT_SIZE, BUS_NUMBER_INPUT_SIZE, android.graphics.Bitmap.Config.ARGB_8888);
+        croppedBitmap = android.graphics.Bitmap.createBitmap(MyApplication.TF_OD_API_INPUT_SIZE, MyApplication.TF_OD_API_INPUT_SIZE, android.graphics.Bitmap.Config.ARGB_8888);
+        numCroppedBitmap = android.graphics.Bitmap.createBitmap(MyApplication.BUS_NUMBER_INPUT_SIZE, MyApplication.BUS_NUMBER_INPUT_SIZE, android.graphics.Bitmap.Config.ARGB_8888);
 
         Log.d("Rotation", sensorOrientation + ", " + rotation + ", " + getScreenOrientation());
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
                         size.getWidth(), size.getHeight(),
-                        TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE,
+                        MyApplication.TF_OD_API_INPUT_SIZE, MyApplication.TF_OD_API_INPUT_SIZE,
                         sensorOrientation, false);
 
         cropToFrameTransform = new Matrix();
