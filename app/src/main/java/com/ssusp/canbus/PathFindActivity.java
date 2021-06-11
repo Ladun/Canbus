@@ -143,7 +143,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_path_find);
 
-
+        initView();
         initAllComponent();
 
         if (savedInstanceState == null) {
@@ -272,11 +272,46 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
         mapFragment.getMapAsync(this);
 
     }
+    //드롭다운 최적경로, 최소도보, 최소환승
+    private void initView() {
+        spinner = findViewById(R.id.spinner_menu);
+        spinnerArr = getResources().getStringArray(R.array.traffic);
+        selected_spinner = spinnerArr[0];
+        final ArrayAdapter<CharSequence> spinnerLargerAdapter =
+                ArrayAdapter.createFromResource(this, R.array.traffic, R.layout.spinner_item);
+        spinner.setAdapter(spinnerLargerAdapter);
+        spinner.setSelection(0);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        option = "";
+                        selected_spinner = spinnerArr[0];
+                        break;
+                    case 1:
+                        option = "&transit_routing_preference=fewer_transfers";
+                        selected_spinner = spinnerArr[1];
+                        break;
+                    case 2:
+                        option = "&transit_routing_preference=less_walking";
+                        selected_spinner = spinnerArr[2];
+                        break;
+                    default:
+                        option = "";
+                }
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+    }
 
     public void directions(String arrival, String destination) {
 
-        str_url = "https://maps.googleapis.com/maps/api/directions/json?"+"origin="+arrival+"&destination="+destination+"&mode=transit"+"&departure_time=now"+"&alternatives=true&language=Korean&key="+API_KEY;
+        str_url = "https://maps.googleapis.com/maps/api/directions/json?"+"origin="+arrival+"&destination="+destination+"&mode=transit"+"&departure_time=now"+option+"&alternatives=true&language=Korean&key="+API_KEY;
 
         System.out.println(str_url);
 
@@ -491,18 +526,16 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                                 if (isTrain.equals("Train")) {
                                     getTransit[i] = lineObject.getString("name");
                                 }
+                                else if (isTrain.equals("Bus")) {
+                                    getTransit[i] = lineObject.getString("short_name");
+
+                                }
+
                                 else if (isTrain.equals("Subway")) {
                                     getTransit[i] = lineObject.getString("short_name");
-                                    if (getTransit[i].equals("1")) {
-                                        getTransit[i] += "호선";
-                                    }
+
                                 }
-                                else if (isTrain.equals("Bus")) {
-                                    if(!lineObject.isNull("short_name")) {
-                                        getTransit[i] = lineObject.getString("short_name");
-                                    }
-                                    else getTransit[i] = lineObject.getString("name");
-                                }
+
 
                                 TransitName[j][i] = getTransit[i];
 
