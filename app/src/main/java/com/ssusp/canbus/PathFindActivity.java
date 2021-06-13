@@ -363,6 +363,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                     getInstructions = new String[r_list_len][];
                     TransitName = new String[r_list_len][20];
                     step = new String[r_list_len][];
+                    String[] getLedDuration = new String[r_list_len];
 
                     marker_arr = new Marker[2][20];
 
@@ -410,6 +411,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                         String leg_duration = legJsonObject.getString("duration");
                         JSONObject legdurObject = new JSONObject(leg_duration);
                         String amountDuration = legdurObject.getString("text");
+                        getLedDuration[j] = amountDuration.split(" ")[0] + "분";
                         String[] set_time = amountDuration.split(" ").clone();
                         for (int k = 0; k < set_time.length; k++) {
                             if (set_time[k].contains("시간") || set_time[k].contains("hours")) {
@@ -427,7 +429,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
 
                         if (j > 0) {
                             TextView time = new TextView(this);
-                            time.setText(full_time[j]);
+                            time.setText(getLedDuration[j]);
 
                             time.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) time.getLayoutParams();
@@ -573,7 +575,7 @@ public class PathFindActivity extends AppCompatActivity implements OnMapReadyCal
                                     img = ResourcesCompat.getDrawable(res, R.drawable.walk, null);
                             }
 
-                            method_view(full_time[j], img, j, i);
+                            method_view(getLedDuration[j], img, j, i);
                         }
                     }
                 }
